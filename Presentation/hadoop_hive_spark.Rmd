@@ -1,8 +1,10 @@
 ---
 title: "Big Data Management"
-subtitle: "with R"
 author: "Bartek Skorulski"
-output: ioslides_presentation
+subtitle: with R
+output:
+  ioslides_presentation: default
+  beamer_presentation: default
 ---
 
 ```{r setup, include=FALSE}

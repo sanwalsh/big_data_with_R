@@ -17,6 +17,7 @@ readInstacart <- function() {
     spark_read_csv(sc, "order_products__prior_tbl", 
                    file.path(DATA_DIR, "order_products__prior.csv"))
   
+<<<<<<< HEAD
   order_products__train <<- 
     spark_read_csv(sc, "order_products__train_tbl", 
                    file.path(DATA_DIR, "order_products__train.csv"))
@@ -24,6 +25,15 @@ readInstacart <- function() {
   orders <<- spark_read_csv(sc, "orders_tbl", file.path(DATA_DIR, "orders.csv"))
   
   products <<- spark_read_csv(sc, "products_tbl", file.path(DATA_DIR, "products.csv"))
+=======
+  #order_products__train <<- 
+   # spark_read_csv(sc, "order_products__train_tbl", 
+    #               file.path(DATA_DIR, "order_products__train.csv"))
+  
+  orders <<- spark_read_csv(sc, "orders_tbl", file.path(DATA_DIR, "orders.csv"))
+  
+  #products <<- spark_read_csv(sc, "products_tbl", file.path(DATA_DIR, "products.csv"))
+>>>>>>> d83f7dce0d7297ec3a62b36575db71b23423dd86
 }
 
 

@@ -142,6 +142,7 @@ products_popularity
 ## Questions
 
 * Which day of week people order most fequently?
+<<<<<<< HEAD
 
 
 ```{r}
@@ -280,6 +281,11 @@ products_popularity %>%
   ylab("Number of orders") +
   theme_minimal()
 ```
+=======
+* The most popular hour of doing order? 
+* The most reordered products?
+* The less reorderd product?
+* Plot histogram of number of products in an order.
 * What is the most popular department? 
 
 ## Whisker, magrittr
