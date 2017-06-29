@@ -12,16 +12,9 @@ readFootball()
 library(ggplot2)
 library(ggthemes)
 
-##print(dbListTables(con))
+print(dbListTables(sql_con))
 ```
 
-```
-select ~ SELECT
-filter ~ WHERE
-arrange ~ ORDER
-summarise ~ aggregators: sum, min, sd, etc.
-mutate ~ operators: +, *, log, etc.
-```
 ## Pipes
 
 ```{r}
@@ -34,18 +27,32 @@ players %>%
   colnames
 ```
 ```{r}
+sapply(players,class)
 players %>%
   sapply(class)
+
+class %>%
+  sapply(players, .) #the dot indicates to put class as second argument
 ```
 
 
 
-## SELECT ~ select
+## SELECT ~ select # dplyer
 
 ```{r}
 players %>%
   head %>%
   select(player_name, birthday)
+```
+
+
+```{r}
+dbGetQuery(sql_con, "
+SELECT player_name
+,   birthday
+FROM Player
+LIMIT 6
+")
 ```
 
 ## WHERE ~ filter
@@ -55,6 +62,14 @@ players %>%
   filter(birthday >= "1998") %>%
   head
 ```
+```{r}
+dbGetQuery(sql_con, "
+SELECT *
+FROM Player
+WHERE birthday >= 1998
+LIMIT 6
+")
+```
 
 ## ORDER ~ arrange
 
@@ -62,6 +77,14 @@ players %>%
 players %>%
   arrange(birthday) %>%
   head
+```
+```{r}
+dbGetQuery(sql_con, "
+SELECT *
+FROM Player
+ORDER BY birthday ASC
+LIMIT 6
+")
 ```
 
 ## aggregators ~ summarise
@@ -71,6 +94,14 @@ players %>%
   summarise(weight=mean(weight), height=mean(height))
 ```
 
+```{r}
+dbGetQuery(sql_con, "
+SELECT AVG(height) as av_height, AVG(weight) as av_weigth
+FROM Player
+")
+```
+
+
 ## mutate
 
 ```{r}
@@ -78,24 +109,56 @@ players %>%
   mutate(weight_kg = weight*0.45359237) %>%
   summarise(weight=mean(weight_kg), height=mean(height))
 ```
+```{r}
+"
+SELECT AVG(weight*0.45359237) as weight_kg, AVG(height) as av_height
+FROM Player
+" %>%
+dbGetQuery(sql_con,.)
+```
 
 ## GROUP BY
-
 ```{r}
 players %>%
   mutate(year=as.numeric(substring(birthday, 1, 4))) %>%
   group_by(year) %>%
-  summarise(weight=mean(height)) %>%
-  ggplot(aes(year, weight)) +
+  summarise(height=mean(height)) %>%
+  ggplot(aes(year, height)) +
   geom_line(colour="darkorange") +
   theme_minimal()
 ```
+
+```{r}
+"
+SELECT CAST(SUBSTR(birthday,1,4) AS INT) AS year, AVG(height) AS av
+FROM Player
+GROUP BY year
+" %>%
+dbGetQuery(sql_con,.) %>%
+  ggplot(aes(year, av)) +
+  geom_line(colour="darkorange") +
+  theme_minimal()
+```
+
+
+
 ```{r}
 players %>%
   mutate(year=as.numeric(substring(birthday, 1, 4))) %>%
   group_by(year) %>%
   summarise(nsample=n()) %>%
   ggplot(aes(year, nsample)) +
+  geom_line(colour="darkorange") +
+  theme_minimal()
+```
+```{r}
+"
+SELECT CAST(SUBSTR(birthday,1,4) AS INT) AS year, COUNT(1) AS n
+FROM Player
+GROUP BY year
+" %>%
+dbGetQuery(sql_con,.) %>%
+  ggplot(aes(year, n)) +
   geom_line(colour="darkorange") +
   theme_minimal()
 ```
@@ -110,3 +173,64 @@ players %>%
   geom_line(colour="darkorange") +
   theme_minimal()
 ```
+
+Exercise
+
+* Translate from SQL to dply or from dply to SQL
+```{r}
+dbGetQuery(sql_con, "
+SELECT *
+FROM Match
+LIMIT 6
+")
+```
+
+```{r}
+dbGetQuery(sql_con, "
+SELECT country_id
+,   COUNT(1) AS n
+FROM Match
+GROUP BY country_id
+ORDER BY n DESC
+")
+```
+```{r}
+countries
+```
+
+
+```{r}
+games %>%
+  left_join(countries, by=c("country_id" = "id")) %>%
+  select(name, home_team_api_id) %>%
+  group_by(name) %>%
+  summarise(teams = n_distinct(home_team_api_id)) %>%
+  arrange(desc(teams))
+```
+
+```{r}
+dbGetQuery(sql_con, "
+SELECT *
+FROM Player_Attributes
+LIMIT 6
+")
+
+```
+
+* From where do players with higest accuracy come from?
+
+* Add team name and translate to dplyr
+
+```{r}
+dbGetQuery(sql_con, "
+SELECT stage, home_team_api_id, home_team_goal
+FROM Match
+WHERE country_id = 1
+AND season = '2008/2009'
+ORDER BY stage
+")
+```
+
+
+
+

@@ -182,7 +182,10 @@ dbGetQuery(sc, "DESC orders_tbl")
 
 
 ## Whisker, magrittr
-
+```{r}
+data=list(name="Bartek")
+whisker.render("My name is {{name}}.",data)
+```
 ```{r}
 library(whisker)
 library(magrittr)
@@ -226,11 +229,34 @@ product_times_ordered_txt %>%
 ## Questions
 
 * For given department, plot the most popular product (with templating department).
-* For given day, rank department popularity.
+* For given department, give a list of the 10 most popular products (with templating department).
+
+```{r}
+data <- list(department_id = 19)
+
+
+
+product_times_ordered_txt <-"
+SELECT product_id
+
+,   department_id COUNT(1) as pop_dep
+
+FROM products_tbl
+WHERE department_id={{department_id}}
+GROUP BY pop_dep
+ORDER BY pop_dep DESC
+LIMIT 10
+"
+product_times_ordered_txt %>%
+  whisker.render(data) %>%
+  cat
+product_times_ordered_txt %>%
+  whisker.render(data) %>%
+  dbGetQuery(sc, .) %>%
+```
+
 
 ## More on orders (Window Functions)
-
-
 
 ```{r}
 dbGetQuery(sc, 
@@ -254,12 +280,16 @@ WHERE user_id <= 10
 dbGetQuery(sc, 
 "SELECT user_id
 ,   order_id
-,   FIRST_VALUE(order_id)  OVER(partition by user_id ORDER BY order_number) AS first_order
+,   FIRST_VALUE(order_id)  OVER(partition by user_id ORDER BY order_number) AS first_order      
 FROM orders_tbl
 WHERE user_id <= 10 
 ")
+
+# prints first value of window. Orders by order number by user and takes the order_id of the first element of the window.
 ```
-* Product that is usually orders in numerous baskets
+
+
+* Product that is usually ordered in numerous baskets. 
 
 ```{r}
 "
@@ -278,4 +308,64 @@ LIMIT 100
 dbGetQuery(sc, .)
 ```
 
+
+
 * Could modify the query and add prduct name?
+```{r}
+"
+SELECT product_name
+,   pn.product_id
+,   AVG(products_number) AS avg_products_number
+
+FROM (
+    SELECT order_id
+    ,   product_id
+    ,   COUNT(product_id)  OVER(partition by order_id) AS products_number
+    FROM order_products__train_tbl
+) pn
+
+LEFT JOIN (
+    SELECT product_id
+    ,   product_name
+    FROM products_tbl) p
+ON pn.product_id = p.product_id
+
+GROUP BY pn.product_id, product_name
+ORDER BY avg_products_number DESC
+LIMIT 10
+" %>%
+dbGetQuery(sc, .)
+```
+
+* Product that is usually ordered in small baskets.
+```{r}
+"
+SELECT product_name
+,   pn.product_id
+,   AVG(products_number) AS avg_products_number
+
+FROM (
+    SELECT order_id
+    ,   product_id
+    ,   COUNT(product_id)  OVER(partition by order_id) AS products_number
+    FROM order_products__train_tbl
+) pn
+
+LEFT JOIN (
+    SELECT product_id
+    ,   product_name
+    FROM products_tbl) p
+ON pn.product_id = p.product_id
+
+GROUP BY pn.product_id, product_name
+ORDER BY avg_products_number ASC
+LIMIT 10
+" %>%
+dbGetQuery(sc, .)
+```
+
+
+* For 10 first users and all their orders find days since first order.
+```{r}
+
+```
